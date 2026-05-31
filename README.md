@@ -1,45 +1,60 @@
 # lau-ricci-flow-agents
 
-Ricci flow on agent similarity graphs — the same math Perelman used to prove the Poincaré conjecture, applied to how agent populations evolve.
+Networks have curvature. Not the kind you see — the kind you measure by how efficiently information flows between neighbors. Ollivier-Ricci curvature quantifies this: positive curvature means neighbors are already close, negative means they're far apart. Run Ricci flow to smooth the curvature, and communities emerge like islands from the sea.
 
-## Mathematical Foundations
+## The math in 60 seconds
 
-Ricci flow: ∂g/∂t = -2 Ric(g). The metric evolves to uniformize curvature. On graphs, Ollivier-Ricci curvature κ(x,y) = 1 - W₁(μₓ, μᵧ)/d(x,y) where W₁ is Wasserstein-1 distance between neighbor distributions.
+**Ollivier-Ricci curvature** κ(i,j) = 1 - W₁(μᵢ, μⱼ) where W₁ is the Wasserstein-1 distance between the neighbor distributions of nodes i and j. Intuitively: κ > 0 means "neighbors overlap," κ < 0 means "neighbors diverge."
 
-## Types
+Key results:
 
-- **GraphMetric** — weighted graph with Dijkstra shortest paths, Laplacian, normalized Laplacian
-- **OllivierRicciCurvature** — discrete Ricci curvature via optimal transport
-- **FormRicciCurvature** — Forman's combinatorial curvature (faster, O(1) per edge)
-- **RicciFlow** — evolving edge weights by curvature
-- **CurvatureCommunity** — community detection via Ricci flow
-- **CurvatureSpectrum** — spectral analysis via normalized Laplacian eigenvalues
-- **AgentSimilarityGraph** — agents as nodes, cosine similarity as edges
-- **AgentProfile**, **Community**, **GraphSnapshot**, **DenseMatrix**
+- **Ricci flow:** evolve edge weights by dω/dt = -κ·ω — curvature smooths out
+- **Community detection:** after Ricci flow, within-community edges strengthen, between-community edges weaken
+- **Cheeger inequality:** h(G) ≤ √(2λ₁) where λ₁ is the spectral gap — curvature connects to cuts
+- **Modularity + silhouette:** community quality metrics for validation
+- **Spectral analysis:** normalized Laplacian eigenvalues encode cluster structure
 
-## Theorems Verified
+References: Ollivier, *Ricci curvature of Markov chains on metric spaces* (2009); Ni et al., *Community Detection on Networks with Ricci Flow* (2019)
 
-1. Non-leaf tree edges have negative Ollivier-Ricci curvature
-2. Complete graph K_n has positive curvature
-3. Cycle C_n curvature → 0 as n → ∞
-4. Ricci flow reduces curvature variance
-5. Forman curvature on trees: F = 4 - deg(i) - deg(j)
-6. Cheeger inequality: λ₁/2 ≤ h ≤ √(2λ₁)
-7. Modularity increases with natural community splits
-8. Complete graph is Ricci-flat (uniform curvature)
-9. Path graph curvature properties verified
-10. Agent communities found by Ricci flow agree with feature clustering
-
-## Usage
+## Quick start
 
 ```rust
-use lau_ricci_flow_agents::*;
+use lau_ricci_flow_agents::{GraphMetric, RicciFlow, CurvatureCommunity};
 
-let g = complete_graph(5);
-let orc = OllivierRicciCurvature::new(g, 0.5);
-println!("Average curvature: {}", orc.average_curvature());
+// Build a graph with known community structure
+let graph = GraphMetric::stochastic_block_model(3, 20, 0.8, 0.1);
+
+// Compute Ollivier-Ricci curvature for all edges
+let curvatures = graph.ollivier_ricci_curvature();
+
+// Run Ricci flow for 10 iterations
+let evolved = RicciFlow::run(&graph, 10, 0.5);
+
+// Detect communities
+let communities = CurvatureCommunity::detect(&evolved);
+let modularity = communities.modularity();
+
+// Verify Cheeger inequality
+let cheeger = evolved.cheeger_constant();
+let spectral_gap = evolved.spectral_gap();
+assert!(cheeger <= (2.0 * spectral_gap).sqrt() + 1e-6);
 ```
 
-## License
+## Key types
 
-MIT
+| Type | What it is |
+|------|-----------|
+| `GraphMetric` | Weighted graph with shortest-path metric |
+| `OllivierRicci` | Curvature κ(i,j) via optimal transport between neighborhoods |
+| `FormanRicci` | Combinatorial curvature (faster to compute, coarser) |
+| `RicciFlow` | Curvature-driven edge weight evolution |
+| `CurvatureCommunity` | Community detection from evolved graph |
+| `SpectralAnalysis` | Laplacian eigenvalues, spectral gap, Cheeger constant |
+
+## Contributing
+
+[Open an issue](https://github.com/SuperInstance/lau-ricci-flow-agents/issues) or PR. We'd love:
+
+- Directed graph support (asymmetric curvature)
+- Dynamic graphs (streaming curvature updates)
+- GPU-accelerated optimal transport
