@@ -1,3 +1,4 @@
+#![deny(unsafe_code)]
 //! Ricci flow on agent similarity graphs.
 //!
 //! Implements Ollivier-Ricci and Forman discrete curvature, Ricci flow evolution,
