@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Ricci flow on agent similarity graphs — discrete Ollivier-Ricci curvature for agent population evolution"
 license = "MIT"
+repository = "https://github.com/SuperInstance/lau-ricci-flow-agents"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
